@@ -1,0 +1,32 @@
+[project]
+name = "charlie"
+version = "0.1.0"
+description = "Charlie v2 local runtime sidecar"
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.7",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "httpx>=0.27",
+    "websockets>=13",
+    "numpy>=1.26,<2",
+    "faster-whisper>=1.0",
+    "pyautogui>=0.9.54",
+    "pillow>=10.0",
+    "pyobjc-core>=10.0; sys_platform == 'darwin'",
+    "pyobjc-framework-Quartz>=10.0; sys_platform == 'darwin'",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]

@@ -1,0 +1,193 @@
+:root {
+  --wall: #2c2144;
+  --ink: #1a1630;
+  --paper: #f6ecda;
+  --paper-dim: #e7d9c4;
+  --lantern: #e8a0bf;
+  --dusk: #7a6aa5;
+  --you: #3d3358;
+  --good: #c9e4c5;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--wall);
+  color: var(--paper);
+  font-family: "Hiragino Sans", "Yu Gothic UI", "Segoe UI", sans-serif;
+}
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  grid-template-rows: 52px 1fr 88px;
+  grid-template-areas:
+    "title title"
+    "companion transcript"
+    "composer composer";
+}
+
+.title {
+  grid-area: title;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 18px 22px 0 78px;
+}
+
+.title h1 {
+  margin: 0;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", "Songti SC", serif;
+  font-weight: 500;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+}
+
+.status {
+  font-size: 13px;
+  color: var(--lantern);
+  opacity: 0.9;
+}
+
+.companion {
+  grid-area: companion;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px 16px;
+  gap: 12px;
+}
+
+.portrait {
+  width: 156px;
+  height: 196px;
+  border-radius: 78px 78px 28px 28px;
+  background: linear-gradient(#3b2d5c, #241b3a);
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(246, 236, 218, 0.12);
+}
+
+.portrait svg {
+  width: 100%;
+  height: 100%;
+}
+
+.portrait.listening {
+  box-shadow: inset 0 0 0 2px var(--lantern);
+}
+
+.portrait.thinking .brow {
+  transform: translateY(-2px);
+}
+
+.portrait.acting {
+  box-shadow: inset 0 0 0 2px var(--dusk);
+}
+
+.portrait.error {
+  box-shadow: inset 0 0 0 2px #d98989;
+}
+
+.kicker {
+  font-size: 12px;
+  color: var(--paper-dim);
+  text-align: center;
+  max-width: 160px;
+  line-height: 1.4;
+}
+
+.transcript {
+  grid-area: transcript;
+  overflow: auto;
+  padding: 8px 28px 16px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bubble {
+  max-width: 92%;
+  padding: 10px 14px;
+  border-radius: 4px 16px 16px 16px;
+  line-height: 1.45;
+  font-size: 15px;
+  white-space: pre-wrap;
+}
+
+.bubble.you {
+  align-self: flex-end;
+  background: var(--you);
+  color: var(--paper);
+  border-radius: 16px 4px 16px 16px;
+}
+
+.bubble.charlie {
+  align-self: flex-start;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.bubble.system {
+  align-self: center;
+  background: transparent;
+  color: var(--paper-dim);
+  font-size: 13px;
+}
+
+.composer {
+  grid-area: composer;
+  display: grid;
+  grid-template-columns: 1fr 52px;
+  gap: 10px;
+  padding: 12px 20px 20px;
+  background: #241b3a;
+}
+
+.composer input {
+  border: 0;
+  border-radius: 2px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+  padding: 0 16px;
+  outline: none;
+}
+
+.composer input:focus {
+  box-shadow: 0 0 0 2px var(--lantern);
+}
+
+.mic {
+  width: 52px;
+  height: 52px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--lantern);
+  color: var(--ink);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.mic:active,
+.mic.held {
+  transform: scale(0.96);
+  background: #f3c1d3;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .portrait,
+  .mic {
+    transition: none;
+  }
+}

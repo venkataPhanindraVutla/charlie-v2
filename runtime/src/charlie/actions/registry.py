@@ -37,6 +37,7 @@ class Registry:
             "os.folder.open": self._open_folder,
             "os.terminal.run": self._run_command,
             "os.app.jump": self._jump,
+            "os.chat.send": self._chat_send,
             "computer.hotkey": lambda a: computer.hotkey(a.get("keys") or a.get("key")),
             "computer.type": lambda a: computer.type_text(str(a.get("text") or ""), float(a.get("interval") or 0.02)),
             "computer.press": lambda a: computer.press(str(a.get("key") or "")),
@@ -123,6 +124,18 @@ class Registry:
         if not app or not query:
             raise RuntimeError("Missing app or search name.")
         return self.adapter.quick_switch(str(app), str(query), hotkey=_letter(args.get("hotkey")))
+
+    def _chat_send(self, args: dict[str, Any]) -> str:
+        app = args.get("app") or args.get("name")
+        query = args.get("query") or args.get("recipient")
+        message = args.get("message") or args.get("text")
+        if not app or not query:
+            raise RuntimeError("Missing app or recipient.")
+        if not str(message or "").strip():
+            raise RuntimeError("Missing message.")
+        return self.adapter.compose_message(
+            str(app), str(query), str(message), hotkey=_letter(args.get("hotkey") or "f")
+        )
 
 
 def _truncate_command_output(stdout: str, stderr: str, code: int) -> str:

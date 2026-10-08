@@ -11,6 +11,7 @@ dependencies = [
     "websockets>=13",
     "numpy>=1.26,<2",
     "faster-whisper>=1.0",
+    "edge-tts>=6.1",
     "pyautogui>=0.9.54",
     "pillow>=10.0",
     "pyobjc-core>=10.0; sys_platform == 'darwin'",
@@ -19,6 +20,8 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]
+laya = ["laya>=0.3.27"]
+voice = ["RealtimeSTT>=0.3.0"]
 
 [build-system]
 requires = ["setuptools>=68"]

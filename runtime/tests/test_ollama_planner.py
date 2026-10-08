@@ -10,7 +10,7 @@ def test_plan_parses_ollama_json():
     def handler(request: httpx.Request) -> httpx.Response:
         sent = json.loads(request.content)
         assert sent.get("think") is False
-        assert sent.get("options", {}).get("num_predict") == 512
+        assert sent.get("options", {}).get("num_predict") == 384
         body = {
             "message": {
                 "content": json.dumps(

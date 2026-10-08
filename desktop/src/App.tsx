@@ -1,5 +1,4 @@
 import { FormEvent, PointerEvent, useEffect, useRef, useState } from "react";
-import { speakLocal } from "./tts";
 import { createHoldToTalk } from "./voice";
 import { connectRuntime } from "./ws";
 import { Portrait } from "./Portrait";
@@ -43,7 +42,6 @@ export function App() {
         push("charlie", text);
         setState("idle");
       },
-      onSpeak: (text) => speakLocal(text),
       onError: (msg) => {
         push("system", msg);
         setState("error");

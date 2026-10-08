@@ -26,6 +26,10 @@ class StubAdapter:
         self.opened.append(f"{app}:{query}:{hotkey}")
         return f"Opened {query} in {app}."
 
+    def compose_message(self, app: str, query: str, message: str, hotkey: str = "f") -> str:
+        self.opened.append(f"send:{app}:{query}:{hotkey}:{message}")
+        return f"Sent to {query} in {app}."
+
 
 def test_registry_dispatches_open_app():
     adapter = StubAdapter()

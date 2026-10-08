@@ -71,3 +71,28 @@ class WindowsAdapter:
         if result.returncode != 0:
             raise RuntimeError(result.stderr.strip() or f"Could not jump to {query} in {app}.")
         return f"Opened {query} in {app}."
+
+    def compose_message(self, app: str, query: str, message: str, hotkey: str = "f") -> str:
+        opened = self.quick_switch(app, query, hotkey)
+        body = (message or "").strip()[:1500]
+        if not body:
+            raise RuntimeError("No message to send.")
+        escaped = body.replace("'", "''")
+        script = (
+            "Start-Sleep -Milliseconds 700;"
+            "Set-Clipboard -Value @'\n"
+            f"{escaped}\n"
+            "'@;"
+            "Add-Type -AssemblyName System.Windows.Forms;"
+            "[System.Windows.Forms.SendKeys]::SendWait('^v');"
+            "Start-Sleep -Milliseconds 250;"
+            "[System.Windows.Forms.SendKeys]::SendWait('{ENTER}');"
+        )
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", script],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(result.stderr.strip() or f"Could not send to {query} in {app}.")
+        return f"Sent to {query} in {app}. ({opened})"

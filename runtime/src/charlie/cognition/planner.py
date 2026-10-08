@@ -19,6 +19,8 @@ class Plan:
     actions: list[Action]
     say: str = ""
     done: bool = True
+    domain: str = "apps"
+    steps: list[Any] = field(default_factory=list)
 
 
 class Planner:

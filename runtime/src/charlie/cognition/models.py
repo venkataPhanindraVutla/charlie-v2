@@ -7,12 +7,25 @@ import httpx
 
 from charlie.cognition.planner import Action, ModelUnavailable, Plan, Planner
 from charlie.cognition.personality import SYSTEM_PROMPT
+from charlie.harness.task import TaskStep
 
 PLAN_SCHEMA: dict[str, Any] = {
     "type": "object",
     "properties": {
         "say": {"type": "string"},
-        "done": {"type": "boolean"},
+        "domain": {"type": "string"},
+        "steps": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "objective": {"type": "string"},
+                    "capability": {"type": "string"},
+                    "args": {"type": "object"},
+                },
+                "required": ["capability"],
+            },
+        },
         "actions": {
             "type": "array",
             "items": {
@@ -21,11 +34,10 @@ PLAN_SCHEMA: dict[str, Any] = {
                     "tool": {"type": "string"},
                     "args": {"type": "object"},
                 },
-                "required": ["tool"],
             },
         },
     },
-    "required": ["say", "actions"],
+    "required": ["say"],
 }
 
 
@@ -53,36 +65,35 @@ class OllamaPlanner(Planner):
             role = turn.get("role", "user")
             history_lines.append(f"{role}: {turn.get('text', '')}")
         history_block = "\n".join(history_lines) or "(none)"
-        tool_lines = []
+        cap_lines = []
         for spec in tools or []:
             params = ", ".join((spec.get("parameters") or {}).keys()) or "(none)"
-            tool_lines.append(f"- {spec['name']} {{{params}}} — {spec.get('description', '')}")
-        tools_block = "\n".join(tool_lines) or "(none)"
-        obs_lines = []
-        for i, obs in enumerate(observations or [], start=1):
-            snippet = str(obs.get("observation") or "")[:800]
-            obs_lines.append(f"{i}. {obs.get('tool')} ok={obs.get('ok')}\n{snippet}")
-        obs_block = "\n".join(obs_lines) or "(none yet)"
+            cap_lines.append(f"- {spec['name']} {{{params}}}")
+        caps = "\n".join(cap_lines) or "(none)"
+        obs_block = json.dumps(observations or [], ensure_ascii=False)
+        if len(obs_block) > 3500:
+            obs_block = obs_block[:3500] + "…"
+        reporting = bool(observations)
         payload = {
             "model": self.model,
             "stream": False,
             "think": False,
             "keep_alive": "10m",
             "format": PLAN_SCHEMA,
-            "options": {"temperature": 0.2, "num_predict": 512},
+            "options": {"temperature": 0.1, "num_predict": 384},
             "messages": [
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {
                     "role": "user",
                     "content": (
-                        "Choose tools yourself. Emit a JSON plan.\n"
-                        f"Tools:\n{tools_block}\n"
+                        "Plan ONLY this line. Do not repeat WhatsApp/Slack from history unless this line asks for it.\n"
+                        "If observations are present, return steps=[] and write say from those facts.\n"
+                        "If no OS action is needed and this is not a live-fact lookup, return steps=[].\n"
+                        f"Capabilities:\n{'(none — answer only)' if reporting else caps}\n"
                         f"Current task: {current_task or text}\n"
                         f"Recent turns:\n{history_block}\n"
-                        f"Tool results so far:\n{obs_block}\n"
-                        f"Now: {text}\n"
-                        "If results already finish the task, set done=true and actions=[]. "
-                        "Otherwise set done=false and emit the next actions."
+                        f"Observations:\n{obs_block if reporting else '(none)'}\n"
+                        f"Now: {text}"
                     ),
                 },
             ],
@@ -104,10 +115,26 @@ class OllamaPlanner(Planner):
             data = json.loads(content)
         except json.JSONDecodeError as exc:
             raise ModelUnavailable("planner returned non-JSON") from exc
+        steps = []
+        for item in data.get("steps") or []:
+            if not isinstance(item, dict) or not item.get("capability"):
+                continue
+            steps.append(
+                TaskStep(
+                    objective=str(item.get("objective") or item["capability"]),
+                    capability=str(item["capability"]),
+                    args=item.get("args") or {},
+                )
+            )
         actions = [
             Action(tool=item["tool"], args=item.get("args") or {})
             for item in data.get("actions") or []
             if isinstance(item, dict) and item.get("tool")
         ]
-        done = True if "done" not in data else bool(data.get("done"))
-        return Plan(actions=actions, say=data.get("say") or "Done.", done=done)
+        return Plan(
+            actions=actions,
+            say=data.get("say") or "Done.",
+            done=not steps and not actions,
+            domain=str(data.get("domain") or "apps"),
+            steps=steps,
+        )

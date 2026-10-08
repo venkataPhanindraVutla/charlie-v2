@@ -80,3 +80,52 @@ end tell
                 )
             raise RuntimeError(err or f"Could not jump to {query} in {app}.")
         return f"Opened {query} in {app}."
+
+    def compose_message(self, app: str, query: str, message: str, hotkey: str = "f") -> str:
+        query = re.sub(r"[^A-Za-z0-9 ._-]", "", query).strip()[:80]
+        body = (message or "").strip()[:1500]
+        if not query:
+            raise RuntimeError("No name to search.")
+        if not body:
+            raise RuntimeError("No message to send.")
+        self.open_app(app)
+        key = (hotkey or "f")[:1]
+        script = f"""
+set the clipboard to "{_osa_quote(body)}"
+tell application "{_osa_quote(app)}" to activate
+delay 1.5
+tell application "System Events"
+  keystroke "{key}" using command down
+  delay 0.45
+  keystroke "a" using command down
+  delay 0.08
+  keystroke "{_osa_quote(query)}"
+  delay 1.0
+  key code 125
+  delay 0.25
+  keystroke return
+  delay 0.8
+  key code 53
+  delay 0.4
+  keystroke "v" using command down
+  delay 0.3
+  keystroke return
+end tell
+"""
+        result = subprocess.run(["osascript"], input=script, capture_output=True, text=True)
+        if result.returncode != 0:
+            err = (result.stderr or "").strip()
+            lowered = err.lower()
+            if "not allowed" in lowered or "assistive" in lowered or "accessibility" in lowered:
+                _open_accessibility_settings()
+                raise RuntimeError(
+                    "Accessibility has no Terminal row until you add it. Click +, press Cmd-Shift-G, "
+                    "paste /Applications/Cursor.app, and toggle it on. Terminal.app lives in "
+                    "/Applications/Utilities/ if you want that too."
+                )
+            raise RuntimeError(err or f"Could not send to {query} in {app}.")
+        return f"Sent to {query} in {app}."
+
+
+def _osa_quote(text: str) -> str:
+    return text.replace("\\", "\\\\").replace('"', '\\"')
